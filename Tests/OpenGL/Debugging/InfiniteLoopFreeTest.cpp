@@ -26,11 +26,13 @@ namespace avocet::testing
         if(is_windows()) {
             using namespace curlew;
             glfw_manager manager{};
+            auto w{manager.create_window({.hiding{window_hiding_mode::on}})};
+            const auto& ctx = w.gl_context();
             if(is_intel(find_rendering_setup().renderer)) {
                 namespace agl = avocet::opengl;
                 check_exception_thrown<std::runtime_error>(
                     "Repeatedly call glGetError",
-                    [](){ agl::check_for_basic_errors(agl::num_messages{5}, std::source_location::current()); }
+                    [&ctx](){ agl::check_for_basic_errors(ctx, agl::num_messages{5}, std::source_location::current()); }
                 );
             }
         }

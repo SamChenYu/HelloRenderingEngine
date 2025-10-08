@@ -7,6 +7,15 @@ gl_function: null function pointer at Tests/OpenGL/Debugging/NullFunctionPointer
 
 =======================================
 
+Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, Line 44
+Null GetError when checking for basic errors
+
+Expected Exception Type:
+[std::runtime_error]
+get_error: null GetError function pointer
+
+=======================================
+
 Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, Line 53
 Null BindBuffer
 

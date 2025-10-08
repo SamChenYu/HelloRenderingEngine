@@ -43,7 +43,7 @@ namespace avocet::testing
                 [&ctx](){
                     agl::gl_function{&GladGLContext::BindBuffer}(ctx, GL_ARRAY_BUFFER, 42);
                     agl::gl_function{&GladGLContext::CreateShader}(ctx, 0);
-                    agl::check_for_advanced_errors(agl::num_messages{10}, std::source_location::current());
+                    agl::check_for_advanced_errors(ctx, agl::num_messages{10}, std::source_location::current());
                 }
             );
         }

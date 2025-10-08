@@ -45,7 +45,7 @@ namespace avocet::opengl {
             if(!fn) throw std::runtime_error{std::format("gl_function: null function pointer at {}", to_string(loc))};
 
             const auto ret{fn(args...)};
-            check_for_errors(loc);
+            check_for_errors(ctx, loc);
             return ret;
         }
 
@@ -56,17 +56,14 @@ namespace avocet::opengl {
             if(!fn) throw std::runtime_error{std::format("gl_function: null function pointer at {}", to_string(loc))};
 
             fn(args...);
-            check_for_errors(loc);
+            check_for_errors(ctx, loc);
         }
     private:
         function_pointer_type GladGLContext::* m_FnMemberPtr;
 
-        static void check_for_errors(std::source_location loc) {
+        static void check_for_errors(const GladGLContext& ctx, std::source_location loc) {
             if constexpr(Mode != debugging_mode::none) {
-                // NOTE: Error checking temporarily disabled - needs context to query GL
-                // TODO: Refactor to pass context through or use thread-local context
-                // The check functions are currently disabled in Errors.cpp
-                check_for_basic_errors(max_reported_messages, loc);
+                check_for_basic_errors(ctx, max_reported_messages, loc);
             }
         }
     };

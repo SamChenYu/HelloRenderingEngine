@@ -199,7 +199,9 @@ namespace avocet::opengl {
         [[nodiscard]]
         error_code get_error(const GladGLContext& ctx) {
             // Direct call since error checking functions can't use gl_function wrapper
-            return ctx.GetError ? error_code{ctx.GetError()} : error_code::none;
+            if(!ctx.GetError)
+                throw std::runtime_error{"get_error: null GetError function pointer"};
+            return error_code{ctx.GetError()};
         }
 
 #ifndef __clang__
@@ -254,22 +256,37 @@ namespace avocet::opengl {
     [[nodiscard]]
     std::string to_string(std::source_location loc) { return std::format("{}, line {}", fs::path{loc.file_name()}.generic_string(), loc.line()); }
 
-    void check_for_basic_errors([[maybe_unused]] num_messages maxNum, [[maybe_unused]] std::source_location loc)
+    void check_for_basic_errors(const GladGLContext& ctx, num_messages maxNum, std::source_location loc)
     {
-        // NOTE: Error checking is currently disabled because gl_function doesn't have access to context
-        // This needs to be refactored to either:
-        // 1. Pass context through gl_function's error checking path
-        // 2. Use a thread-local context for error checking
-        // 3. Disable automatic error checking and check manually
-        // For now, we disable to allow compilation
+        if constexpr(has_ndebug()) return;
+
+        const auto errors{get_errors(ctx, maxNum)};
+        if(errors.empty()) return;
+
+        std::string errorMessage;
+        for(const auto& e : errors) {
+            errorMessage += to_string(e);
+            errorMessage += '\n';
+        }
+
+        throw std::runtime_error{compose_error_message(errorMessage, loc)};
     }
 
-    void check_for_advanced_errors([[maybe_unused]] num_messages maxNum, [[maybe_unused]] std::source_location loc) {
-        // NOTE: Error checking is currently disabled because gl_function doesn't have access to context
-        // This needs to be refactored to either:
-        // 1. Pass context through gl_function's error checking path
-        // 2. Use a thread-local context for error checking
-        // 3. Disable automatic error checking and check manually
-        // For now, we disable to allow compilation
+    void check_for_advanced_errors(const GladGLContext& ctx, num_messages maxNum, std::source_location loc) {
+        if constexpr(has_ndebug()) return;
+
+        const auto messages{get_messages(ctx, maxNum, loc)};
+        if(messages.empty()) return;
+
+        std::string errorMessage;
+        for(const auto& [severity, message] : messages) {
+            if(severity == debug_severity::high || severity == debug_severity::medium) {
+                errorMessage += message;
+                errorMessage += '\n';
+            }
+        }
+
+        if(!errorMessage.empty())
+            throw std::runtime_error{compose_error_message(errorMessage, loc)};
     }
 }

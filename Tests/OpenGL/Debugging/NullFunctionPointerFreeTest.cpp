@@ -45,7 +45,7 @@ namespace avocet::testing
             [&ctx](){
                 auto& mutable_ctx = const_cast<GladGLContext&>(ctx);
                 gl_breaker breaker{mutable_ctx.GetError};
-                agl::check_for_basic_errors(agl::num_messages{10}, std::source_location::current());
+                agl::check_for_basic_errors(ctx, agl::num_messages{10}, std::source_location::current());
             }
         );
 
