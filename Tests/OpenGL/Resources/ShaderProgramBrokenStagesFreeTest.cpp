@@ -26,12 +26,14 @@ namespace avocet::testing
         auto w{manager.create_window({.hiding{window_hiding_mode::on}})};
 
         namespace agl = avocet::opengl;
+        const auto& ctx = w.gl_context();
         const auto shaderDir{working_materials()};
 
         check_exception_thrown<std::runtime_error>(
             "Broken Vertex Shader",
             [&](){
                 agl::shader_program sp{
+                    ctx,
                     shaderDir / "Broken_Identity.vs",
                     shaderDir / "Monochrome.fs"
                 };
@@ -42,6 +44,7 @@ namespace avocet::testing
             "Broken Fragment Shader",
             [&](){
                 agl::shader_program sp{
+                    ctx,
                     shaderDir / "Identity.vs",
                     shaderDir / "Broken_Monochrome.fs"
                 };
@@ -52,6 +55,7 @@ namespace avocet::testing
             "Unlinkable Vertex Shader / Fragment Shader Combo",
             [&](){
                 agl::shader_program sp{
+                    ctx,
                     shaderDir / "Output_vec3.vs",
                     shaderDir / "Input_float.fs"
                 };

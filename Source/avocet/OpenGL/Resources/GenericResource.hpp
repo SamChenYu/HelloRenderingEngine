@@ -67,11 +67,11 @@ namespace avocet::opengl {
         constexpr static std::size_t N{NumResources.value};
 
         resource_wrapper(const GladGLContext& ctx)
-            : m_Context{ctx}
+            : m_Context{&ctx}
             , m_Handles{lifecycle_type::generate(ctx)}
         {}
 
-        ~resource_wrapper() { lifecycle_type::destroy(m_Context, m_Handles); }
+        ~resource_wrapper() { lifecycle_type::destroy(*m_Context, m_Handles); }
 
         resource_wrapper(resource_wrapper&&)           noexcept = default;
         resource_wrapper& operator=(resource_wrapper&&) noexcept = default;
@@ -80,12 +80,12 @@ namespace avocet::opengl {
         const handles<N>& get_handles() const noexcept { return m_Handles; }
 
         [[nodiscard]]
-        const GladGLContext& get_context() const noexcept { return m_Context; }
+        const GladGLContext& get_context() const noexcept { return *m_Context; }
 
         [[nodiscard]]
         friend bool operator==(const resource_wrapper&, const resource_wrapper&) noexcept = default;
     private:
-        const GladGLContext& m_Context;
+        const GladGLContext* m_Context;
         handles<N> m_Handles;
     };
 

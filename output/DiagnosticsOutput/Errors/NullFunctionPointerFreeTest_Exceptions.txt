@@ -1,27 +1,18 @@
-Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, Line 31
+Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, Line 35
 Constructing gl_function with a null pointer
 
 Expected Exception Type:
 [std::runtime_error]
-gl_function: attempting to construct with a nullptr coming via Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, line 34
+gl_function: null function pointer at Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, line 39
 
 =======================================
 
-Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, Line 39
-Null glGetError when checking for basic errors
+Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, Line 53
+Null BindBuffer
 
 Expected Exception Type:
 [std::runtime_error]
-gl_function: attempting to construct with a nullptr coming via Source/avocet/OpenGL/Debugging/Errors.cpp, line 193
-
-=======================================
-
-Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, Line 50
-Null glBindBuffer
-
-Expected Exception Type:
-[std::runtime_error]
-gl_function: attempting to construct with a nullptr coming via Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, line 53
+gl_function: null function pointer at Tests/OpenGL/Debugging/NullFunctionPointerFreeTest.cpp, line 57
 
 =======================================
 

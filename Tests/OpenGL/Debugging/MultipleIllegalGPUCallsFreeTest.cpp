@@ -9,6 +9,7 @@
 
 #include "MultipleIllegalGPUCallsFreeTest.hpp"
 #include "avocet/OpenGL/Debugging/Errors.hpp"
+#include "avocet/OpenGL/Utilities/GLFunction.hpp"
 
 #include "curlew/Window/GLFWWrappers.hpp"
 

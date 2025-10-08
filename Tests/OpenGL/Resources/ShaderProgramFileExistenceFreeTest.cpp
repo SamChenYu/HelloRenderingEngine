@@ -26,12 +26,14 @@ namespace avocet::testing
         auto w{manager.create_window({.hiding{window_hiding_mode::on}})};
 
         namespace agl = avocet::opengl;
+        const auto& ctx = w.gl_context();
         const auto shaderDir{working_materials()};
 
         check_exception_thrown<std::runtime_error>(
             "Missing Vertex Shader",
             [&](){
                 agl::shader_program sp{
+                    ctx,
                     shaderDir,
                     shaderDir / "Monochrome.fs"
                 };
@@ -42,6 +44,7 @@ namespace avocet::testing
             "Misnamed Vertex Shader",
             [&](){
                 agl::shader_program sp{
+                    ctx,
                     shaderDir / "foo.vs",
                     shaderDir / "Monochrome.fs"
                 };
@@ -52,6 +55,7 @@ namespace avocet::testing
             "Missing Fragment Shader",
             [&](){
                 agl::shader_program sp{
+                    ctx,
                     shaderDir / "Identity.vs",
                     shaderDir
                 };
@@ -62,6 +66,7 @@ namespace avocet::testing
             "Misnamed Fragment Shader",
             [&](){
                 agl::shader_program sp{
+                    ctx,
                     shaderDir / "Identity.vs",
                     shaderDir / "bar.fs"
                 };

@@ -27,6 +27,7 @@ namespace avocet::testing
         glfw_manager manager{};
         auto w{manager.create_window({.hiding{window_hiding_mode::on}})};
 
+        const auto& ctx = w.gl_context();
         using value_type = agl::texture_2d::value_type;
         using opt_data   = std::optional<image_data>;
         std::vector<value_type> textureVals{ 255, 255, 255,  1},
@@ -34,7 +35,7 @@ namespace avocet::testing
                                 textureVals3{255,   0,   0,  0, 255, 0};
         unique_image image{textureVals, 1, 1, colour_channels{4}, alignment{1}};
 
-        agl::texture_2d tex2d{agl::texture_2d_configurator{.data_view{image}, .decoding{}, .parameter_setter{}, .label{}}};
+        agl::texture_2d tex2d{ctx, agl::texture_2d_configurator{.data_view{image}, .decoding{}, .parameter_setter{}, .label{}}};
 
         check(equivalence, "Texture which should be null", tex2d, opt_data{});
         check(equivalence, "Empty texture",                tex2d, opt_data{{.data{},             .width{},  .height{},  .num_channels{1}, .row_alignment{1}}});

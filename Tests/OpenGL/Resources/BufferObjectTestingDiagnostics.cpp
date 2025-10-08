@@ -37,10 +37,11 @@ namespace avocet::testing
     {
         using T = Buffer::value_type;
         using opt_span = std::optional<std::span<const T>>;
+        const auto& ctx = w.gl_context();
         std::vector<T> buffer{40, 41, 42, 43};
-        check(equivalence, "Buffer which should be null", Buffer{buffer, agl::null_label}, opt_span{});
-        check(equivalence, "Too much buffer data",        Buffer{buffer, agl::null_label}, opt_span{std::vector<T>{}});
-        check(equivalence, "Incorrect buffer data",       Buffer{buffer, agl::null_label}, opt_span{std::vector<T>{40, 42, 42, 43}});
-        check(equivalence, "Not enough buffer data",      Buffer{buffer, agl::null_label}, opt_span{std::vector<T>{40, 41, 42, 43, 44}});
+        check(equivalence, "Buffer which should be null", Buffer{ctx, buffer, agl::null_label}, opt_span{});
+        check(equivalence, "Too much buffer data",        Buffer{ctx, buffer, agl::null_label}, opt_span{std::vector<T>{}});
+        check(equivalence, "Incorrect buffer data",       Buffer{ctx, buffer, agl::null_label}, opt_span{std::vector<T>{40, 42, 42, 43}});
+        check(equivalence, "Not enough buffer data",      Buffer{ctx, buffer, agl::null_label}, opt_span{std::vector<T>{40, 41, 42, 43, 44}});
     }
 }

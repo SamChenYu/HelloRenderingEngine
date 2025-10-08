@@ -21,9 +21,11 @@ namespace avocet::testing
     void labelling_false_negative_test::labelling_tests(const curlew::window& w)
     {
         namespace agl = avocet::opengl;
+        const auto& ctx = w.gl_context();
         const auto shaderDir{working_materials()};
 
         agl::shader_program sp{
+            ctx,
             shaderDir / "Identity.vs",
             shaderDir / "Monochrome.fs"
         };
