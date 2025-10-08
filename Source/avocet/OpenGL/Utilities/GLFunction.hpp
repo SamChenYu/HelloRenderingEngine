@@ -9,6 +9,8 @@
 
 #include "avocet/OpenGL/Debugging/Errors.hpp"
 
+#include <glad/gl.h>
+
 #include <concepts>
 #include <format>
 #include <stdexcept>
@@ -27,52 +29,63 @@ namespace avocet::opengl {
 
         constexpr static num_messages max_reported_messages{10};
 
-        gl_function(function_pointer_type f, std::source_location loc = std::source_location::current())
-            : m_Fn{validate(f, loc)}
+        constexpr gl_function(function_pointer_type GladGLContext::* fnPtr, [[maybe_unused]] std::source_location loc = std::source_location::current())
+            : m_FnMemberPtr{fnPtr}
         {}
 
-        gl_function(unchecked_debug_output_t, function_pointer_type f, std::source_location loc = std::source_location::current())
-            : m_Fn{validate(f, loc)}
+        constexpr gl_function(unchecked_debug_output_t, function_pointer_type GladGLContext::* fnPtr, [[maybe_unused]] std::source_location loc = std::source_location::current())
+            : m_FnMemberPtr{fnPtr}
         {
             static_assert(Mode == debugging_mode::none);
         }
 
         [[nodiscard]]
-        R operator()(Args... args, std::source_location loc = std::source_location::current()) const {
-            const auto ret{m_Fn(args...)};
+        R operator()(const GladGLContext& ctx, Args... args, std::source_location loc = std::source_location::current()) const {
+            auto fn = ctx.*m_FnMemberPtr;
+            if(!fn) throw std::runtime_error{std::format("gl_function: null function pointer at {}", to_string(loc))};
+
+            const auto ret{fn(args...)};
             check_for_errors(loc);
             return ret;
         }
 
-        void operator()(Args... args, std::source_location loc = std::source_location::current()) const
+        void operator()(const GladGLContext& ctx, Args... args, std::source_location loc = std::source_location::current()) const
             requires std::is_void_v<R>
         {
-            m_Fn(args...);
+            auto fn = ctx.*m_FnMemberPtr;
+            if(!fn) throw std::runtime_error{std::format("gl_function: null function pointer at {}", to_string(loc))};
+
+            fn(args...);
             check_for_errors(loc);
         }
     private:
-        function_pointer_type m_Fn;
+        function_pointer_type GladGLContext::* m_FnMemberPtr;
 
-        [[nodiscard]]
-        static function_pointer_type validate(function_pointer_type f, std::source_location loc) {
-            return f ? f : throw std::runtime_error{std::format("gl_function: attempting to construct with a nullptr coming via {}", to_string(loc))};
-        }
         static void check_for_errors(std::source_location loc) {
             if constexpr(Mode != debugging_mode::none) {
-                if(debug_output_supported())
-                    check_for_advanced_errors(max_reported_messages, loc);
-                else
-                    check_for_basic_errors(max_reported_messages, loc);
+                // NOTE: Error checking temporarily disabled - needs context to query GL
+                // TODO: Refactor to pass context through or use thread-local context
+                // The check functions are currently disabled in Errors.cpp
+                check_for_basic_errors(max_reported_messages, loc);
             }
         }
     };
 
     template<class R, class... Args>
-    gl_function(R(*)(Args...)) -> gl_function<R(Args...)>;
+    gl_function(R(GladGLContext::*)(Args...)) -> gl_function<R(Args...)>;
+
+    template<class R, class... Args>
+    gl_function(R(*GladGLContext::*)(Args...)) -> gl_function<R(Args...)>;
 
     template<class R, class...Args>
-    gl_function(unchecked_debug_output_t, R(*)(Args...)) -> gl_function<R(Args...), debugging_mode::none>;
+    gl_function(unchecked_debug_output_t, R(GladGLContext::*)(Args...)) -> gl_function<R(Args...), debugging_mode::none>;
 
     template<class R, class...Args>
-    gl_function(unchecked_debug_output_t, R(*)(Args...), std::source_location) -> gl_function<R(Args...), debugging_mode::none>;
+    gl_function(unchecked_debug_output_t, R(*GladGLContext::*)(Args...)) -> gl_function<R(Args...), debugging_mode::none>;
+
+    template<class R, class...Args>
+    gl_function(unchecked_debug_output_t, R(GladGLContext::*)(Args...), std::source_location) -> gl_function<R(Args...), debugging_mode::none>;
+
+    template<class R, class...Args>
+    gl_function(unchecked_debug_output_t, R(*GladGLContext::*)(Args...), std::source_location) -> gl_function<R(Args...), debugging_mode::none>;
 }

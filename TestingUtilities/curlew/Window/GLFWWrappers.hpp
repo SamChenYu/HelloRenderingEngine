@@ -11,6 +11,8 @@
 
 #include "avocet/Core/Preprocessor/PreprocessorDefs.hpp"
 
+#include <glad/gl.h>
+
 #include <string>
 
 struct GLFWwindow;
@@ -87,6 +89,7 @@ namespace curlew {
         friend glfw_manager;
 
         window_resource m_Window;
+        GladGLContext m_GLContext{};
 
         window(const window_config& config, const avocet::opengl::opengl_version& version);
     public:
@@ -98,5 +101,11 @@ namespace curlew {
         ~window() = default;
 
         [[nodiscard]] GLFWwindow& get() noexcept { return m_Window.get(); }
+
+        [[nodiscard]]
+        const GladGLContext& gl_context() const noexcept { return m_GLContext; }
+
+        [[nodiscard]]
+        GladGLContext& gl_context() noexcept { return m_GLContext; }
     };
 }

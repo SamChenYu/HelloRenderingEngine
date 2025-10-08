@@ -30,8 +30,9 @@ namespace avocet::testing
         requires is_gl_buffer_v<Buffer>
     void buffer_object_labelling_free_test::execute(const curlew::window& w)
     {
+        const auto& ctx = w.gl_context();
         std::string label{"This is a nice label!"};
-        Buffer buffer{{}, label};
+        Buffer buffer{ctx, {}, label};
         check(equality, "", buffer.extract_label(), label);
     }
 }

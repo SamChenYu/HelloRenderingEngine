@@ -29,10 +29,15 @@ namespace avocet::opengl {
     }
 
     [[nodiscard]]
-    inline bool debug_output_supported() {
-        return debug_output_supported(get_opengl_version());
+    inline bool debug_output_supported(const GladGLContext& ctx) {
+        return debug_output_supported(get_opengl_version(ctx));
     }
 
     [[nodiscard]]
-    inline bool object_labels_activated() { return debug_output_supported(); }
+    inline bool object_labels_activated() {
+        // Note: Object labeling requires KHR_debug extension which is not available in all OpenGL versions
+        // For now, we disable object labels as they are not available on macOS OpenGL 4.1
+        // TODO: Check for function availability or use extension checking
+        return false;
+    }
 }

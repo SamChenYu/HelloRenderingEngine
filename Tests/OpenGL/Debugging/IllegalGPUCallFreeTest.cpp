@@ -35,18 +35,20 @@ namespace avocet::testing
 
         glfw_manager manager{};
         auto w{manager.create_window({.hiding{window_hiding_mode::on}})};
+        const auto& ctx = w.gl_context();
 
         check_exception_thrown<std::runtime_error>(
-            "Illegal call to glBindBuffer",
-            [](){ agl::gl_function{glBindBuffer}(42, 42); }
+            "Illegal call to BindBuffer",
+            [&ctx](){ agl::gl_function{&GladGLContext::BindBuffer}(ctx, GL_ARRAY_BUFFER, 42); }
         );
 
         check_exception_thrown<std::runtime_error>(
-            "Illegal call to glBindBuffer with glBindBuffer set to nullptr, but after it's copied into gl_function",
-            [](){
-                agl::gl_function f{glBindBuffer};
-                gl_breaker breaker{glBindBuffer};
-                f(42, 42);
+            "Illegal call to BindBuffer with BindBuffer set to nullptr, but after it's copied into gl_function",
+            [&ctx](){
+                agl::gl_function f{&GladGLContext::BindBuffer};
+                auto& mutable_ctx = const_cast<GladGLContext&>(ctx);
+                gl_breaker breaker{mutable_ctx.BindBuffer};
+                f(ctx, GL_ARRAY_BUFFER, 42);
             }
         );
     }

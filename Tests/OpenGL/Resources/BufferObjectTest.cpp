@@ -34,10 +34,11 @@ namespace avocet::testing
     void buffer_object_test::execute(const curlew::window& w)
     {
         using T = Buffer::value_type;
+        const auto& ctx = w.gl_context();
 
         const std::vector<T> xBuffer{0, 1, 2, 4}, yBuffer{5, 6, 7};
         using opt_span = std::optional<std::span<const T>>;
 
-        check_semantics("", Buffer{xBuffer, agl::null_label}, Buffer{yBuffer, agl::null_label}, opt_span{xBuffer}, opt_span{yBuffer}, opt_span{}, opt_span{xBuffer});
+        check_semantics("", Buffer{ctx, xBuffer, agl::null_label}, Buffer{ctx, yBuffer, agl::null_label}, opt_span{xBuffer}, opt_span{yBuffer}, opt_span{}, opt_span{xBuffer});
     }
 }

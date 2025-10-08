@@ -89,18 +89,18 @@ namespace avocet::opengl {
 
         template<class Fn>
           requires std::is_invocable_r_v<vertices_type, Fn, vertices_type> && (!is_textured_v)
-        polygon_base(Fn transformer, const std::optional<std::string>& label)
-            : m_VBO{transformer(st_Vertices), label}
-            , m_VAO{label, m_VBO}
+        polygon_base(const GladGLContext& ctx, Fn transformer, const std::optional<std::string>& label)
+            : m_VBO{ctx, transformer(st_Vertices), label}
+            , m_VAO{ctx, label, m_VBO}
         {
         }
 
         template<class Fn>
             requires std::is_invocable_r_v<vertices_type, Fn, vertices_type> && is_textured_v
-        polygon_base(Fn transformer, const texture_2d_configurator& texConfig, const std::optional<std::string>& label)
-            :     m_VBO{transformer(st_Vertices), label}
-            ,     m_VAO{label, m_VBO}
-            , m_Texture{texConfig}
+        polygon_base(const GladGLContext& ctx, Fn transformer, const texture_2d_configurator& texConfig, const std::optional<std::string>& label)
+            :     m_VBO{ctx, transformer(st_Vertices), label}
+            ,     m_VAO{ctx, label, m_VBO}
+            , m_Texture{ctx, texConfig}
         {
         }
 
@@ -124,6 +124,8 @@ namespace avocet::opengl {
 
         polygon_base(polygon_base&&)            noexcept = default;
         polygon_base& operator=(polygon_base&&) noexcept = default;
+
+        vertex_buffer_object<vertex_attribute_type> m_VBO;
     private:
         struct dummy_texture {};
 
@@ -139,8 +141,6 @@ namespace avocet::opengl {
         }
 
         const inline static vertices_type st_Vertices{vertices()};
-
-        vertex_buffer_object<vertex_attribute_type> m_VBO;
         vertex_attribute_object m_VAO;
         SEQUOIA_NO_UNIQUE_ADDRESS texture_type m_Texture;
 
@@ -161,17 +161,17 @@ namespace avocet::opengl {
 
         template<class Fn>
             requires std::is_invocable_r_v<vertices_type, Fn, vertices_type> && (!is_textured_v)
-        polygon(Fn transformer, const std::optional<std::string>& label)
-            : polygon_base_type{transformer, label}
-            ,             m_EBO{st_Indices, label}
+        polygon(const GladGLContext& ctx, Fn transformer, const std::optional<std::string>& label)
+            : polygon_base_type{ctx, transformer, label}
+            ,             m_EBO{ctx, st_Indices, label}
         {
         }
 
         template<class Fn>
             requires std::is_invocable_r_v<vertices_type, Fn, vertices_type> && is_textured_v
-        polygon(Fn transformer, const texture_2d_configurator& texConfig, const std::optional<std::string>& label)
-            : polygon_base_type{transformer, texConfig, label}
-            ,             m_EBO{st_Indices, label}
+        polygon(const GladGLContext& ctx, Fn transformer, const texture_2d_configurator& texConfig, const std::optional<std::string>& label)
+            : polygon_base_type{ctx, transformer, texConfig, label}
+            ,             m_EBO{ctx, st_Indices, label}
         {
         }
     private:
@@ -196,8 +196,8 @@ namespace avocet::opengl {
             sequoia::utilities::make_array<element_index_type, num_elements>(to_element_index)
         };
 
-        static void do_draw() {
-            gl_function{glDrawElements}(GL_TRIANGLES, num_elements, to_gl_enum(to_gl_type_specifier_v<element_index_type>), nullptr);
+        void do_draw(this const auto& self) {
+            gl_function{&GladGLContext::DrawElements}(get_buffer_context(self.m_VBO), GL_TRIANGLES, num_elements, to_gl_enum(to_gl_type_specifier_v<element_index_type>), nullptr);
         }
 
         element_buffer_object<element_index_type> m_EBO;
@@ -213,8 +213,8 @@ namespace avocet::opengl {
     private:
         friend polygon_base_type;
 
-        static void do_draw() {
-            gl_function{glDrawArrays}(GL_TRIANGLES, 0, 3);
+        void do_draw(this const auto& self) {
+            gl_function{&GladGLContext::DrawArrays}(get_buffer_context(self.m_VBO), GL_TRIANGLES, 0, 3);
         }
     };
 
