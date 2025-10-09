@@ -1,3 +1,4 @@
+
 ////////////////////////////////////////////////////////////////////
 //                Copyright Oliver J. Rosten 2024.                //
 // Distributed under the GNU GENERAL PUBLIC LICENSE, Version 3.0. //
@@ -87,6 +88,7 @@ namespace curlew {
         friend glfw_manager;
 
         window_resource m_Window;
+        GladGLContext m_Context{};
 
         window(const window_config& config, const avocet::opengl::opengl_version& version);
     public:
@@ -98,5 +100,7 @@ namespace curlew {
         ~window() = default;
 
         [[nodiscard]] GLFWwindow& get() noexcept { return m_Window.get(); }
+
+        [[nodiscard]] const GladGLContext& context() const noexcept { return m_Context; }
     };
 }

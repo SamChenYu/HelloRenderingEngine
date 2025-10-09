@@ -49,17 +49,18 @@ namespace curlew {
             return win ? *win : throw std::runtime_error{"Failed to create GLFW window"};
         }
 
-        void init_debug()
+        void init_debug(const GladGLContext& ctx)
         {
             GLint flags{};
-            agl::gl_function{agl::unchecked_debug_output, glGetIntegerv}(GL_CONTEXT_FLAGS, &flags);
+            agl::gl_function{agl::unchecked_debug_output, &GladGLContext::GetIntegerv}(ctx, GL_CONTEXT_FLAGS, &flags);
             if(flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-                if(const auto version{agl::get_opengl_version()}; !agl::debug_output_supported(version))
+                if(const auto version{agl::get_opengl_version(ctx)}; !agl::debug_output_supported(version))
                     throw std::runtime_error{std::format("init_debug: inconsistency between context flags {} and OpengGL version {}", flags, version)};
 
-                agl::gl_function{agl::unchecked_debug_output, glEnable}(GL_DEBUG_OUTPUT);
-                agl::gl_function{agl::unchecked_debug_output, glEnable}(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-                agl::gl_function{agl::unchecked_debug_output, glDebugMessageControl}(
+                agl::gl_function{agl::unchecked_debug_output, &GladGLContext::Enable}(ctx, GL_DEBUG_OUTPUT);
+                agl::gl_function{agl::unchecked_debug_output, &GladGLContext::Enable}(ctx, GL_DEBUG_OUTPUT_SYNCHRONOUS);
+                agl::gl_function{agl::unchecked_debug_output, &GladGLContext::DebugMessageControl}(
+                    ctx,
                     GL_DONT_CARE,
                     GL_DONT_CARE,
                     GL_DONT_CARE,
@@ -87,18 +88,28 @@ namespace curlew {
     [[nodiscard]]
     rendering_setup glfw_manager::attempt_to_find_rendering_setup(const agl::opengl_version referenceVersion) const {
         auto w{window({.hiding{window_hiding_mode::on}}, referenceVersion)};
-        return {agl::get_opengl_version(), agl::get_vendor(), agl::get_renderer()};
+        return {agl::get_opengl_version(w.context()), agl::get_vendor(w.context()), agl::get_renderer(w.context())};
     }
 
     [[nodiscard]]
     rendering_setup glfw_manager::do_find_rendering_setup() const {
-      const auto setup{attempt_to_find_rendering_setup(agl::opengl_version{})};
-      if((setup.version != agl::opengl_version{}) || avocet::is_apple())
-          return setup;
+        constexpr agl::opengl_version trialVersion{.major{4}, .minor{avocet::is_windows() ? 6 : 1}};
 
-      // Assume we only get here if we're on windows, in which case
-      // the version is 4.6. If this ever fails in practice, it can be fixed.
-      return attempt_to_find_rendering_setup(agl::opengl_version{.major{4}, .minor{6}});
+        const auto setup{attempt_to_find_rendering_setup(trialVersion)};
+        if(avocet::is_windows() || avocet::is_apple()) {
+            if(setup.version != trialVersion)
+                throw std::runtime_error{std::format("On {} expected OpenGL version {} but found {}", avocet::is_windows() ? "Windows" : "Apple", trialVersion, setup.version)};
+        }
+        else if(setup.version == trialVersion) {
+            // On some (but not all) linux systems, requesting a trial version of 4.1 will return
+            // a version of 4.1, even if higher OpenGL versions are available. However, all such
+            // systems I've encountered to date happen to support 4.6. If the latter turns out not
+            // to be the case somewhere, than the following will need to be amended in order to
+            // divine the actual maximum supported version.
+            return attempt_to_find_rendering_setup(agl::opengl_version{.major{4}, .minor{6}});
+        }
+
+        return setup;
     }
 
     [[nodiscard]]
@@ -113,9 +124,9 @@ namespace curlew {
     window::window(const window_config& config, const agl::opengl_version& version) : m_Window{config, version} {
         glfwMakeContextCurrent(&m_Window.get());
 
-        if(!gladLoadGL(glfwGetProcAddress))
+        if(!gladLoadGLContext(&m_Context, glfwGetProcAddress))
             throw std::runtime_error{"Failed to initialize GLAD"};
 
-        init_debug();
+        init_debug(m_Context);
     }
 }
