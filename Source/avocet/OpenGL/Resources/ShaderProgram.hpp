@@ -17,9 +17,9 @@
 namespace avocet::opengl {
     template<class T>
     inline constexpr bool has_shader_lifecycle_events_v{
-        requires(T& t, const resource_handle& handle) {
-            { t.create() } -> std::same_as<resource_handle>;
-            T::destroy(handle);
+        requires(T& t, const GladGLContext& ctx, const resource_handle& handle) {
+            { t.create(ctx) } -> std::same_as<resource_handle>;
+            T::destroy(ctx, handle);
         }
     };
 
@@ -27,14 +27,16 @@ namespace avocet::opengl {
         requires has_shader_lifecycle_events_v<LifeEvents>
     class generic_shader_resource {
         resource_handle m_Handle;
+        const GladGLContext* m_Context;
     public:
         template<class... Args>
             requires std::is_constructible_v<LifeEvents, Args...>
-        explicit(sizeof...(Args) == 1) generic_shader_resource(const Args&... args)
-            : m_Handle{LifeEvents{args...}.create()}
+        explicit(sizeof...(Args) == 2) generic_shader_resource(const GladGLContext& ctx, const Args&... args)
+            : m_Handle{LifeEvents{args...}.create(ctx)}
+            , m_Context{&ctx}
         {}
 
-        ~generic_shader_resource() { LifeEvents::destroy(m_Handle); }
+        ~generic_shader_resource() { LifeEvents::destroy(*m_Context, m_Handle); }
 
         generic_shader_resource(generic_shader_resource&&) noexcept = default;
 
@@ -42,6 +44,9 @@ namespace avocet::opengl {
 
         [[nodiscard]]
         const resource_handle& handle() const noexcept { return m_Handle; }
+
+        [[nodiscard]]
+        const GladGLContext& context() const noexcept { return *m_Context; }
 
         [[nodiscard]]
         friend bool operator==(const generic_shader_resource&, const generic_shader_resource&) noexcept = default;
@@ -54,9 +59,9 @@ namespace avocet::opengl {
 
     struct shader_program_resource_lifecycle {
         [[nodiscard]]
-        static resource_handle create() { return resource_handle{gl_function{glCreateProgram}()}; }
+        static resource_handle create(const GladGLContext& ctx) { return resource_handle{gl_function{&GladGLContext::CreateProgram}(ctx)}; }
 
-        static void destroy(const resource_handle& handle) { gl_function{glDeleteProgram}(get_index(handle)); }
+        static void destroy(const GladGLContext& ctx, const resource_handle& handle) { gl_function{&GladGLContext::DeleteProgram}(ctx, get_index(handle)); }
     };
 
     using shader_program_resource = generic_shader_resource<shader_program_resource_lifecycle>;
@@ -77,7 +82,7 @@ namespace avocet::opengl {
 
     class shader_program {
     public:
-        shader_program(const std::filesystem::path& vertexShaderSource, const std::filesystem::path& fragmentShaderSource);
+        shader_program(const GladGLContext& ctx, const std::filesystem::path& vertexShaderSource, const std::filesystem::path& fragmentShaderSource);
 
         shader_program(shader_program&&) noexcept = default;
 
@@ -86,20 +91,20 @@ namespace avocet::opengl {
         ~shader_program() { program_tracker::reset(m_Resource); }
 
         [[nodiscard]]
-        std::string extract_label() const { return get_object_label(object_identifier::program, m_Resource.handle()); }
+        std::string extract_label() const { return get_object_label(m_Resource.context(), object_identifier::program, m_Resource.handle()); }
 
         void use() { program_tracker::utilize(m_Resource); }
 
         void set_uniform(std::string_view name, GLfloat val) {
-            do_set_uniform(name, gl_function{glUniform1f}, val);
+            do_set_uniform(name, gl_function{&GladGLContext::Uniform1f}, val);
         }
 
         void set_uniform(std::string_view name, GLint val) {
-            do_set_uniform(name, gl_function{glUniform1i}, val);
+            do_set_uniform(name, gl_function{&GladGLContext::Uniform1i}, val);
         }
 
         void set_uniform(std::string_view name, std::span<const GLfloat, 2> vals) {
-            do_set_uniform(name, gl_function{glUniform2f}, vals[0], vals[1]);
+            do_set_uniform(name, gl_function{&GladGLContext::Uniform2f}, vals[0], vals[1]);
         }
 
         [[nodiscard]]
@@ -113,9 +118,9 @@ namespace avocet::opengl {
         GLint extract_uniform_location(std::string_view name);
 
         template<class... Args>
-        void do_set_uniform(std::string_view name, gl_function<void(GLint, Args...)> fn, Args... args) {
+        void do_set_uniform(std::string_view name, gl_function<void(const GladGLContext&, GLint, Args...)> fn, Args... args) {
             use();
-            fn(extract_uniform_location(name), args...);
+            fn(m_Resource.context(), extract_uniform_location(name), args...);
         }
 
         class program_tracker {
@@ -123,7 +128,7 @@ namespace avocet::opengl {
         public:
             static void utilize(const shader_program_resource& spr) {
                 if(const auto index{get_index(spr)}; index != st_Current) {
-                    gl_function{glUseProgram}(index);
+                    gl_function{&GladGLContext::UseProgram}(spr.context(), index);
                     st_Current = index;
                 }
             }
