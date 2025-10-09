@@ -45,12 +45,12 @@ namespace avocet::opengl {
         }
 
         void load_to_gpu(const texture_2d_configurator& config) {
-            gl_function{glPixelStorei}(GL_UNPACK_ALIGNMENT, to_ogl_alignment(config.data_view.row_alignment()));
+            gl_function{&GladGLContext::PixelStorei}(GL_UNPACK_ALIGNMENT, to_ogl_alignment(config.data_view.row_alignment()));
 
             const auto format{to_texture_format(config.data_view.num_channels())};
             using value_type = texture_2d_configurator::value_type;
 
-            gl_function{glTexImage2D}(
+            gl_function{&GladGLContext::TexImage2D}(
                 GL_TEXTURE_2D,
                 0,
                 to_gl_int(to_internal_format(format, config.decoding)),
@@ -66,7 +66,7 @@ namespace avocet::opengl {
         [[nodiscard]]
         GLint extract_texture_2d_param(GLenum paramName) {
             GLint param{};
-            gl_function{glGetTexLevelParameteriv}(GL_TEXTURE_2D, 0, paramName, &param);
+            gl_function{&GladGLContext::GetTexLevelParameteriv}(GL_TEXTURE_2D, 0, paramName, &param);
             return param;
         }
     }
@@ -91,9 +91,9 @@ namespace avocet::opengl {
 
         std::vector<value_type> texture(size);
 
-        gl_function{glPixelStorei}(GL_PACK_ALIGNMENT, to_ogl_alignment(rowAlignment));
+        gl_function{&GladGLContext::PixelStorei}(GL_PACK_ALIGNMENT, to_ogl_alignment(rowAlignment));
 
-        gl_function{glGetTexImage}(
+        gl_function{&GladGLContext::GetTexImage}(
             GL_TEXTURE_2D,
             0,
             to_gl_enum(format),

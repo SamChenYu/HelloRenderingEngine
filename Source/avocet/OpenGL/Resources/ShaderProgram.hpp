@@ -54,9 +54,9 @@ namespace avocet::opengl {
 
     struct shader_program_resource_lifecycle {
         [[nodiscard]]
-        static resource_handle create() { return resource_handle{gl_function{glCreateProgram}()}; }
+        static resource_handle create() { return resource_handle{gl_function{&GladGLContext::CreateProgram}()}; }
 
-        static void destroy(const resource_handle& handle) { gl_function{glDeleteProgram}(get_index(handle)); }
+        static void destroy(const resource_handle& handle) { gl_function{&GladGLContext::DeleteProgram}(get_index(handle)); }
     };
 
     using shader_program_resource = generic_shader_resource<shader_program_resource_lifecycle>;
@@ -91,15 +91,15 @@ namespace avocet::opengl {
         void use() { program_tracker::utilize(m_Resource); }
 
         void set_uniform(std::string_view name, GLfloat val) {
-            do_set_uniform(name, gl_function{glUniform1f}, val);
+            do_set_uniform(name, gl_function{&GladGLContext::Uniform1f}, val);
         }
 
         void set_uniform(std::string_view name, GLint val) {
-            do_set_uniform(name, gl_function{glUniform1i}, val);
+            do_set_uniform(name, gl_function{&GladGLContext::Uniform1i}, val);
         }
 
         void set_uniform(std::string_view name, std::span<const GLfloat, 2> vals) {
-            do_set_uniform(name, gl_function{glUniform2f}, vals[0], vals[1]);
+            do_set_uniform(name, gl_function{&GladGLContext::Uniform2f}, vals[0], vals[1]);
         }
 
         [[nodiscard]]
@@ -123,7 +123,7 @@ namespace avocet::opengl {
         public:
             static void utilize(const shader_program_resource& spr) {
                 if(const auto index{get_index(spr)}; index != st_Current) {
-                    gl_function{glUseProgram}(index);
+                    gl_function{&GladGLContext::UseProgram}(index);
                     st_Current = index;
                 }
             }

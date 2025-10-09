@@ -31,7 +31,7 @@ namespace avocet::testing
             "Constructing gl_function with a null pointer",
             [](){
                 gl_breaker breaker{glGetError};
-                return agl::gl_function{agl::unchecked_debug_output, glGetError}();
+                return agl::gl_function{agl::unchecked_debug_output, &GladGLContext::GetError}();
             }
         );
 
@@ -50,7 +50,7 @@ namespace avocet::testing
             "Null glBindBuffer",
             [](){
                 gl_breaker breaker{glBindBuffer};
-                agl::gl_function{glBindBuffer}(42, 42);
+                agl::gl_function{&GladGLContext::BindBuffer}(42, 42);
             }
         );
     }
