@@ -57,13 +57,15 @@ int main()
         auto w{manager.create_window({.width{800}, .height{800}, .name{"Hello Rendering Engine"}})};
 
         namespace agl = avocet::opengl;
+        const auto& ctx{w.context()};
         agl::shader_program
-            shaderProgram      {get_shader_dir() / "Identity.vs",           get_shader_dir() / "Monochrome.fs"},
-            discShaderProgram  {get_shader_dir() / "Disc2D.vs",             get_shader_dir() / "Disc.fs"},
-            shaderProgram2D    {get_shader_dir() / "IdentityTextured2D.vs", get_shader_dir() / "Textured.fs"},
-            shaderProgramDouble{get_shader_dir() / "IdentityDouble.vs",     get_shader_dir() / "Monochrome.fs"};
+            shaderProgram      {ctx, get_shader_dir() / "Identity.vs",           get_shader_dir() / "Monochrome.fs"},
+            discShaderProgram  {ctx, get_shader_dir() / "Disc2D.vs",             get_shader_dir() / "Disc.fs"},
+            shaderProgram2D    {ctx, get_shader_dir() / "IdentityTextured2D.vs", get_shader_dir() / "Textured.fs"},
+            shaderProgramDouble{ctx, get_shader_dir() / "IdentityDouble.vs",     get_shader_dir() / "Monochrome.fs"};
 
         agl::quad<GLdouble, agl::dimensionality{3}> q{
+            ctx,
             [](std::ranges::random_access_range auto verts) {
                 for(auto& vert : verts) {
                     sequoia::get<0>(vert) += agl::local_coordinates<GLdouble, agl::dimensionality{3}>{0.5, -0.5};
@@ -78,6 +80,7 @@ int main()
         constexpr agl::local_coordinates<GLfloat, agl::dimensionality{2}> centre{-0.5f, 0.5f};
 
         agl::triangle<GLfloat, agl::dimensionality{2}> disc{
+            ctx,
             [radius, centre](std::ranges::random_access_range auto verts) {
                 for(auto& vert : verts) {
                     constexpr auto scale{2 * radius / 0.5};
@@ -89,10 +92,11 @@ int main()
             make_label("Disc")
         };
 
-        discShaderProgram.set_uniform("radius", radius);
-        discShaderProgram.set_uniform("centre", centre.values());
+        discShaderProgram.set_uniform(ctx, "radius", radius);
+        discShaderProgram.set_uniform(ctx, "centre", centre.values());
 
         agl::polygon<GLfloat, 7, agl::dimensionality{3}> sept{
+            ctx,
             [](std::ranges::random_access_range auto verts) {
                 for(auto& vert : verts) {
                     sequoia::get<0>(vert) += agl::local_coordinates<GLfloat, agl::dimensionality{3}>{0.5f, 0.5f};
@@ -106,6 +110,7 @@ int main()
         avocet::unique_image pony{get_image_dir() / "PrincessTwilightSparkle.png", avocet::flip_vertically::yes, avocet::all_channels_in_image};
 
         agl::polygon<GLfloat, 6, agl::dimensionality{2}, agl::texture_coordinates<GLfloat>> hex{
+            ctx,
             [](std::ranges::random_access_range auto verts) {
                 for(auto& vert : verts) {
                     sequoia::get<0>(vert) += agl::local_coordinates<GLfloat, agl::dimensionality{2}>{-0.5f, -0.5f};
@@ -116,26 +121,26 @@ int main()
             agl::texture_2d_configurator{
                 .data_view{pony},
                 .decoding{agl::sampling_decoding::srgb},
-                .parameter_setter{ [](){ agl::gl_function{glTexParameteri}(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); }},
+                .parameter_setter{ [&ctx](){ agl::gl_function{&GladGLContext::TexParameteri}(ctx, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); }},
                 .label{"Princess TS"}
             },
             make_label("Hexagon")
         };
 
-        shaderProgram2D.set_uniform("image", 8);
+        shaderProgram2D.set_uniform(ctx, "image", 8);
 
         while(!glfwWindowShouldClose(&w.get())) {
-            agl::gl_function{glClearColor}(0.2f, 0.3f, 0.3f, 1.0f);
-            agl::gl_function{glClear}(GL_COLOR_BUFFER_BIT);
+            agl::gl_function{&GladGLContext::ClearColor}(ctx, 0.2f, 0.3f, 0.3f, 1.0f);
+            agl::gl_function{&GladGLContext::Clear}(ctx, GL_COLOR_BUFFER_BIT);
 
-            shaderProgramDouble.use();
-            q.draw();
-            discShaderProgram.use();
-            disc.draw();
-            shaderProgram.use();
-            sept.draw();
-            shaderProgram2D.use();
-            hex.draw(agl::texture_unit{8});
+            shaderProgramDouble.use(ctx);
+            q.draw(ctx);
+            discShaderProgram.use(ctx);
+            disc.draw(ctx);
+            shaderProgram.use(ctx);
+            sept.draw(ctx);
+            shaderProgram2D.use(ctx);
+            hex.draw(ctx, agl::texture_unit{8});
 
             glfwSwapBuffers(&w.get());
             glfwPollEvents();
