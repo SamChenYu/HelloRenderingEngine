@@ -27,30 +27,31 @@ namespace avocet::testing
         namespace agl = avocet::opengl;
         using namespace curlew;
 
+        glfw_manager manager{};
+        auto w{manager.create_window({.hiding{window_hiding_mode::on}})};
+        const auto& ctx{w.context()};
+
         check_exception_thrown<std::runtime_error>(
             "Constructing gl_function with a null pointer",
-            [](){
-                gl_breaker breaker{glGetError};
-                return agl::gl_function{agl::unchecked_debug_output, glGetError}();
+            [&ctx](){
+                gl_breaker breaker{ctx.GetError};
+                return agl::gl_function{agl::unchecked_debug_output, &GladGLContext::GetError}(ctx);
             }
         );
 
         check_exception_thrown<std::runtime_error>(
             "Null glGetError when checking for basic errors",
-            [](){
-                gl_breaker breaker{glGetError};
-                agl::check_for_basic_errors(agl::num_messages{10}, std::source_location::current());
+            [&ctx](){
+                gl_breaker breaker{ctx.GetError};
+                agl::check_for_basic_errors(ctx, agl::num_messages{10}, std::source_location::current());
             }
         );
 
-        glfw_manager manager{};
-        auto w{manager.create_window({.hiding{window_hiding_mode::on}})};
-
         check_exception_thrown<std::runtime_error>(
             "Null glBindBuffer",
-            [](){
-                gl_breaker breaker{glBindBuffer};
-                agl::gl_function{glBindBuffer}(42, 42);
+            [&ctx](){
+                gl_breaker breaker{ctx.BindBuffer};
+                agl::gl_function{&GladGLContext::BindBuffer}(ctx, 42, 42);
             }
         );
     }
