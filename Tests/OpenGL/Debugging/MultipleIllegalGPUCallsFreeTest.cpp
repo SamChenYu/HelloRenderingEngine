@@ -33,6 +33,7 @@ namespace avocet::testing
         using namespace curlew;
         glfw_manager manager{};
         auto w{manager.create_window({.hiding{window_hiding_mode::on}})};
+        const auto& ctx{w.context();}
 
         namespace agl = avocet::opengl;
         if(agl::debug_output_supported()) {

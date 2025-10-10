@@ -55,6 +55,7 @@ int main()
         std::cout << curlew::rendering_setup_summary(manager.get_rendering_setup());
 
         auto w{manager.create_window({.width{800}, .height{800}, .name{"Hello Rendering Engine"}})};
+        const auto& ctx{w.context();}
 
         namespace agl = avocet::opengl;
         agl::shader_program

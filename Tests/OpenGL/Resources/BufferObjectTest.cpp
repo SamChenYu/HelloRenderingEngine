@@ -38,6 +38,7 @@ namespace avocet::testing
         const std::vector<T> xBuffer{0, 1, 2, 4}, yBuffer{5, 6, 7};
         using opt_span = std::optional<std::span<const T>>;
 
+        const auto& ctx{w.context();}
         check_semantics("", Buffer{xBuffer, agl::null_label}, Buffer{yBuffer, agl::null_label}, opt_span{xBuffer}, opt_span{yBuffer}, opt_span{}, opt_span{xBuffer});
     }
 }

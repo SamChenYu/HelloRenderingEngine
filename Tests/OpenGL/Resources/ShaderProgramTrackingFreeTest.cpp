@@ -32,7 +32,8 @@ namespace avocet::testing
 
         agl::resource_handle make_and_use_shader_program(curlew::glfw_manager& manager,const fs::path& shaderDir) {
             auto w{manager.create_window({.hiding{curlew::window_hiding_mode::on}})};
-
+            const auto& ctx{w.context();}
+            
             agl::shader_program sp{shaderDir / "Identity.vs", shaderDir / "Monochrome.fs"};
             sp.use();
 
