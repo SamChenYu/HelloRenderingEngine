@@ -54,9 +54,9 @@ namespace avocet::opengl {
 
     struct shader_program_resource_lifecycle {
         [[nodiscard]]
-        static resource_handle create() { return resource_handle{gl_function{glCreateProgram}()}; }
+        static resource_handle create(const GladGLContext& ctx) { return resource_handle{gl_function{&GladGLContext::CreateProgram}(ctx)}; }
 
-        static void destroy(const resource_handle& handle) { gl_function{glDeleteProgram}(get_index(handle)); }
+        static void destroy(const GladGLContext& ctx, const resource_handle& handle) { gl_function{&GladGLContext::DeleteProgram}(ctx, get_index(handle)); }
     };
 
     using shader_program_resource = generic_shader_resource<shader_program_resource_lifecycle>;
@@ -83,23 +83,23 @@ namespace avocet::opengl {
 
         shader_program& operator=(shader_program&&) noexcept = default;
 
-        ~shader_program() { program_tracker::reset(m_Resource); }
+        ~shader_program() = default;
 
         [[nodiscard]]
-        std::string extract_label() const { return get_object_label(object_identifier::program, m_Resource.handle()); }
+        std::string extract_label(const GladGLContext& ctx) const { return get_object_label(ctx, object_identifier::program, m_Resource.handle()); }
 
-        void use() { program_tracker::utilize(m_Resource); }
+        void use(const GladGLContext& ctx) { program_tracker::utilize(ctx, m_Resource); }
 
-        void set_uniform(std::string_view name, GLfloat val) {
-            do_set_uniform(name, gl_function{glUniform1f}, val);
+        void set_uniform(const GladGLContext& ctx, std::string_view name, GLfloat val) {
+            do_set_uniform(ctx, name, gl_function{&GladGLContext::Uniform1f}, val);
         }
 
-        void set_uniform(std::string_view name, GLint val) {
-            do_set_uniform(name, gl_function{glUniform1i}, val);
+        void set_uniform(const GladGLContext& ctx, std::string_view name, GLint val) {
+            do_set_uniform(ctx, name, gl_function{&GladGLContext::Uniform1i}, val);
         }
 
-        void set_uniform(std::string_view name, std::span<const GLfloat, 2> vals) {
-            do_set_uniform(name, gl_function{glUniform2f}, vals[0], vals[1]);
+        void set_uniform(const GladGLContext& ctx, std::string_view name, std::span<const GLfloat, 2> vals) {
+            do_set_uniform(ctx, name, gl_function{&GladGLContext::Uniform2f}, vals[0], vals[1]);
         }
 
         [[nodiscard]]
@@ -110,25 +110,25 @@ namespace avocet::opengl {
         map_t m_Uniforms;
 
         [[nodiscard]]
-        GLint extract_uniform_location(std::string_view name);
+        GLint extract_uniform_location(const GladGLContext& ctx, std::string_view name);
 
         template<class... Args>
-        void do_set_uniform(std::string_view name, gl_function<void(GLint, Args...)> fn, Args... args) {
-            use();
-            fn(extract_uniform_location(name), args...);
+        void do_set_uniform(const GladGLContext& ctx, std::string_view name, gl_function<void(GLint, Args...)> fn, Args... args) {
+            use(ctx);
+            fn(ctx, extract_uniform_location(ctx, name), args...);
         }
 
         class program_tracker {
             inline static GLuint st_Current{};
         public:
-            static void utilize(const shader_program_resource& spr) {
+            static void utilize(const GladGLContext& ctx, const shader_program_resource& spr) {
                 if(const auto index{get_index(spr)}; index != st_Current) {
-                    gl_function{glUseProgram}(index);
+                    gl_function{&GladGLContext::UseProgram}(ctx, index);
                     st_Current = index;
                 }
             }
 
-            static void reset(const shader_program_resource& spr) {
+            static void reset(const GladGLContext& ctx, const shader_program_resource& spr) {
                 if(get_index(spr) == st_Current)
                     st_Current = 0;
             }

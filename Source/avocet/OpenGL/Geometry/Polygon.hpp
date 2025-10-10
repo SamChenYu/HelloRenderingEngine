@@ -89,32 +89,32 @@ namespace avocet::opengl {
 
         template<class Fn>
           requires std::is_invocable_r_v<vertices_type, Fn, vertices_type> && (!is_textured_v)
-        polygon_base(Fn transformer, const std::optional<std::string>& label)
+        polygon_base(const GladGLContext& ctx, Fn transformer, const std::optional<std::string>& label)
             : m_VBO{transformer(st_Vertices), label}
-            , m_VAO{label, m_VBO}
+            , m_VAO{ctx, label, m_VBO}
         {
         }
 
         template<class Fn>
             requires std::is_invocable_r_v<vertices_type, Fn, vertices_type> && is_textured_v
-        polygon_base(Fn transformer, const texture_2d_configurator& texConfig, const std::optional<std::string>& label)
+        polygon_base(const GladGLContext& ctx, Fn transformer, const texture_2d_configurator& texConfig, const std::optional<std::string>& label)
             :     m_VBO{transformer(st_Vertices), label}
-            ,     m_VAO{label, m_VBO}
+            ,     m_VAO{ctx, label, m_VBO}
             , m_Texture{texConfig}
         {
         }
 
         template<class Self>
             requires (!is_textured_v)
-        void draw(this const Self& self) {
-            self.bind_vao_and_draw();
+        void draw(this const Self& self, const GladGLContext& ctx) {
+            self.bind_vao_and_draw(ctx);
         }
 
         template<class Self>
             requires is_textured_v
-        void draw(this const Self& self, texture_unit unit) {
-            bind(self.m_Texture, unit);
-            self.bind_vao_and_draw();
+        void draw(this const Self& self, const GladGLContext& ctx, texture_unit unit) {
+            bind(ctx, self.m_Texture, unit);
+            self.bind_vao_and_draw(ctx);
         }
 
         [[nodiscard]]
@@ -145,9 +145,9 @@ namespace avocet::opengl {
         SEQUOIA_NO_UNIQUE_ADDRESS texture_type m_Texture;
 
         template<class Self>
-        void bind_vao_and_draw(this const Self& self) {
-            bind(self.m_VAO);
-            self.do_draw();
+        void bind_vao_and_draw(this const Self& self, const GladGLContext& ctx) {
+            bind(ctx, self.m_VAO);
+            self.do_draw(ctx);
         }
     };
 
@@ -161,16 +161,16 @@ namespace avocet::opengl {
 
         template<class Fn>
             requires std::is_invocable_r_v<vertices_type, Fn, vertices_type> && (!is_textured_v)
-        polygon(Fn transformer, const std::optional<std::string>& label)
-            : polygon_base_type{transformer, label}
+        polygon(const GladGLContext& ctx, Fn transformer, const std::optional<std::string>& label)
+            : polygon_base_type{ctx, transformer, label}
             ,             m_EBO{st_Indices, label}
         {
         }
 
         template<class Fn>
             requires std::is_invocable_r_v<vertices_type, Fn, vertices_type> && is_textured_v
-        polygon(Fn transformer, const texture_2d_configurator& texConfig, const std::optional<std::string>& label)
-            : polygon_base_type{transformer, texConfig, label}
+        polygon(const GladGLContext& ctx, Fn transformer, const texture_2d_configurator& texConfig, const std::optional<std::string>& label)
+            : polygon_base_type{ctx, transformer, texConfig, label}
             ,             m_EBO{st_Indices, label}
         {
         }
@@ -196,8 +196,8 @@ namespace avocet::opengl {
             sequoia::utilities::make_array<element_index_type, num_elements>(to_element_index)
         };
 
-        static void do_draw() {
-            gl_function{glDrawElements}(GL_TRIANGLES, num_elements, to_gl_enum(to_gl_type_specifier_v<element_index_type>), nullptr);
+        static void do_draw(const GladGLContext& ctx) {
+            gl_function{&GladGLContext::DrawElements}(ctx, GL_TRIANGLES, num_elements, to_gl_enum(to_gl_type_specifier_v<element_index_type>), nullptr);
         }
 
         element_buffer_object<element_index_type> m_EBO;
@@ -213,8 +213,8 @@ namespace avocet::opengl {
     private:
         friend polygon_base_type;
 
-        static void do_draw() {
-            gl_function{glDrawArrays}(GL_TRIANGLES, 0, 3);
+        static void do_draw(const GladGLContext& ctx) {
+            gl_function{&GladGLContext::DrawArrays}(ctx, GL_TRIANGLES, 0, 3);
         }
     };
 
