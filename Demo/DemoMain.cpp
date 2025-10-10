@@ -116,7 +116,7 @@ int main()
             agl::texture_2d_configurator{
                 .data_view{pony},
                 .decoding{agl::sampling_decoding::srgb},
-                .parameter_setter{ [](){ agl::gl_function{glTexParameteri}(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); }},
+                .parameter_setter{ [](){ agl::gl_function{&GladGLContext::TexParameteri}(ctx, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); }},
                 .label{"Princess TS"}
             },
             make_label("Hexagon")
@@ -125,8 +125,8 @@ int main()
         shaderProgram2D.set_uniform("image", 8);
 
         while(!glfwWindowShouldClose(&w.get())) {
-            agl::gl_function{glClearColor}(0.2f, 0.3f, 0.3f, 1.0f);
-            agl::gl_function{glClear}(GL_COLOR_BUFFER_BIT);
+            agl::gl_function{&GladGLContext::ClearColor}(ctx, 0.2f, 0.3f, 0.3f, 1.0f);
+            agl::gl_function{&GladGLContext::Clear}(ctx, GL_COLOR_BUFFER_BIT);
 
             shaderProgramDouble.use();
             q.draw();

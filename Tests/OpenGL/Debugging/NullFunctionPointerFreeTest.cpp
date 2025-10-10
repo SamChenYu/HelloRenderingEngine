@@ -50,7 +50,7 @@ namespace avocet::testing
             "Null glBindBuffer",
             [](){
                 gl_breaker breaker{glBindBuffer};
-                agl::gl_function{glBindBuffer}(42, 42);
+                agl::gl_function{&GladGLContext::BindBuffer}(ctx, 42, 42);
             }
         );
     }
