@@ -59,10 +59,10 @@ int main()
 
         namespace agl = avocet::opengl;
         agl::shader_program
-            shaderProgram      {get_shader_dir() / "Identity.vs",           get_shader_dir() / "Monochrome.fs"},
-            discShaderProgram  {get_shader_dir() / "Disc2D.vs",             get_shader_dir() / "Disc.fs"},
-            shaderProgram2D    {get_shader_dir() / "IdentityTextured2D.vs", get_shader_dir() / "Textured.fs"},
-            shaderProgramDouble{get_shader_dir() / "IdentityDouble.vs",     get_shader_dir() / "Monochrome.fs"};
+            shaderProgram      {ctx, get_shader_dir() / "Identity.vs",           get_shader_dir() / "Monochrome.fs"},
+            discShaderProgram  {ctx, get_shader_dir() / "Disc2D.vs",             get_shader_dir() / "Disc.fs"},
+            shaderProgram2D    {ctx, get_shader_dir() / "IdentityTextured2D.vs", get_shader_dir() / "Textured.fs"},
+            shaderProgramDouble{ctx, get_shader_dir() / "IdentityDouble.vs",     get_shader_dir() / "Monochrome.fs"};
 
         agl::quad<GLdouble, agl::dimensionality{3}> q{
             [](std::ranges::random_access_range auto verts) {
@@ -117,7 +117,7 @@ int main()
             agl::texture_2d_configurator{
                 .data_view{pony},
                 .decoding{agl::sampling_decoding::srgb},
-                .parameter_setter{ [](){ agl::gl_function{glTexParameteri}(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); }},
+                .parameter_setter{ [&ctx](){ agl::gl_function{&GladGLContext::TexParameteri}(ctx, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); }},
                 .label{"Princess TS"}
             },
             make_label("Hexagon")
@@ -126,8 +126,8 @@ int main()
         shaderProgram2D.set_uniform("image", 8);
 
         while(!glfwWindowShouldClose(&w.get())) {
-            agl::gl_function{glClearColor}(0.2f, 0.3f, 0.3f, 1.0f);
-            agl::gl_function{glClear}(GL_COLOR_BUFFER_BIT);
+            agl::gl_function{&GladGLContext::ClearColor}(ctx, 0.2f, 0.3f, 0.3f, 1.0f);
+            agl::gl_function{&GladGLContext::Clear}(ctx, GL_COLOR_BUFFER_BIT);
 
             shaderProgramDouble.use();
             q.draw();
