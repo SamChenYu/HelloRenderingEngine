@@ -21,9 +21,10 @@ namespace avocet::testing
 
     namespace
     {
-        agl::resource_handle get_current_program_index() {
+        agl::resource_handle get_current_program_index(const curlew::window& w) {
+            const auto& ctx{w.context()};
             GLint param{};
-            agl::gl_function{glGetIntegerv}(GL_CURRENT_PROGRAM, &param);
+            agl::gl_function{&GladGLContext::GetIntegerv}(ctx, GL_CURRENT_PROGRAM, &param);
             if(param < 0)
                 throw std::runtime_error{std::format("Negative program index: {}", param)};
 
@@ -32,11 +33,12 @@ namespace avocet::testing
 
         agl::resource_handle make_and_use_shader_program(curlew::glfw_manager& manager,const fs::path& shaderDir) {
             auto w{manager.create_window({.hiding{curlew::window_hiding_mode::on}})};
+            const auto& ctx{w.context()};
 
-            agl::shader_program sp{shaderDir / "Identity.vs", shaderDir / "Monochrome.fs"};
-            sp.use();
+            agl::shader_program sp{ctx, shaderDir / "Identity.vs", shaderDir / "Monochrome.fs"};
+            sp.use(ctx);
 
-            return get_current_program_index();
+            return get_current_program_index(w);
         }
 
         [[nodiscard]]
